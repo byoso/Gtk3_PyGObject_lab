@@ -1,30 +1,10 @@
 import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
-
-import os
+from gi.repository import Gtk, GObject
 
 from gui.generic.file_selector import FileSelector
-
-
-class SelectibleListItem(Gtk.ListBoxRow):
-    def __init__(self, text):
-        super().__init__()
-        self.selected: bool = False
-        self.label = Gtk.Label(label=text)
-        self.add(self.label)
-
-        self.connect("activate", self.on_activate)
-    def on_activate(self, widget):
-        print(f"Item '{self.label.get_text()}' activated")
-
-
-class SelectibleListBox(Gtk.ListBox):
-    def __init__(self):
-        super().__init__()
-        self.data: dict[str, bool] = {}  #  {path: selected}
-
+from gui.custom.folder_tree_view import FolderTreeView
 
 
 class FilesCherryPicker(Gtk.Box):
@@ -33,34 +13,55 @@ class FilesCherryPicker(Gtk.Box):
         - folder_selector.button: clicked
         - folder_selector.entry: activate -> entry.get_text()
     """
-    def __init__(self):
+    __gsignals__ = {
+        "selected": (
+            GObject.SignalFlags.RUN_FIRST,
+            None,
+            (str,),  # that means one argument sent with the signal
+        ),
+    }
+    def __init__(self, folders=None, short_path_length=120):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
-        self.folders: list[str] = []
-        self.files: dict[str, bool] = {}  #  {path: selected}
+        if folders is None:
+            self.folders: list[str] = []
+        else:
+            self.folders = folders
+        self.short_path_length = short_path_length
         self.viewport = Gtk.Viewport()
         self.add(self.viewport)
-        self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.viewport.add(self.box)
-        self.selector_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        self.folder_selector = FileSelector(folder_selector=True)
+        self.selector_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        self.folder_selector = FileSelector(folder_selector=True, placeholder="Add a folder")
         self.selector_box.pack_start(self.folder_selector, True, True, 0)
         self.box.pack_start(self.selector_box, True, True, 0)
-        self.folder_selector.entry.connect("activate", self.on_path_validated)
+        self.folder_selector.connect("selected", self.add_folder)
+        self.box_folder_containers = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.box.pack_start(self.box_folder_containers, True, True, 0)
 
-    def on_path_validated(self, widget):
-        path = self.folder_selector.entry.get_text()
-        if os.path.exists(path) and path not in self.folders:
-            self.folders.append(path)
-            self.add_folder(path)
-        else:
-            self.folder_selector.entry.set_text("")
+        self.build_folder_containers()
 
-    def add_folder(self, path: str):
-        print((f"Adding folder: {path}"))
-        folder_item = SelectibleListItem(path)
-        self.box.pack_start(folder_item, False, True, 0)
-        self.show_all()
+    def add_folder(self, widget, path: str):
+        self.folder_selector.clear()
+        if path in self.folders:
+            return
+        self.folders.append(path)
+        self.build_folder_containers()
 
-def path_exists(path: str) -> bool:
-    import os
-    return os.path.exists(path)
+    def build_folder_containers(self):
+        for child in self.box_folder_containers.get_children():
+            self.box_folder_containers.remove(child)  # Clear existing folder containers
+        for folder_path in self.folders:
+            folder_tree_view = FolderTreeView(folder=folder_path, short_path_length=self.short_path_length)
+            folder_tree_view.connect("selected", self.on_path_selected)
+            self.box_folder_containers.pack_start(folder_tree_view, True, True, 0)
+
+    def on_path_selected(self, widget, path: str):
+        print(path)
+        self.emit("selected", path)
+
+    def get_selection(self) -> list[str]:
+        return self.selection
+
+    def clear_selection(self):
+        self.selection.clear()

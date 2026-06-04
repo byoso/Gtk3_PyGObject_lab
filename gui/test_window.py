@@ -25,9 +25,9 @@ class TestWindow(Gtk.Window):
         self.add(scrolled_window)
 
         # test button
-        self.test_button = TestButton()
-        self.test_button.connect("clicked", self.test_button_clicked)  # connecter le signal personnalisé
-        self.box.pack_start(self.test_button, True, True, 0)
+        # self.test_button = TestButton()
+        # self.test_button.connect("clicked", self.test_button_clicked)  # connecter le signal personnalisé
+        # self.box.pack_start(self.test_button, True, True, 0)
 
         #  ========================================
 
