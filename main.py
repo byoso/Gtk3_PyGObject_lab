@@ -7,7 +7,7 @@ from gi.repository import Gtk
 
 
 
-from gui.test_window import TestWindow
+from test_window import TestWindow
 
 
 

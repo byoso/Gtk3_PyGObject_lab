@@ -6,7 +6,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GObject
 
 
-from gui.custom.closable_label import ClosableLabel
+from components.small.closable_label import ClosableLabel
 
 
 class FolderTreeView(Gtk.Box):
@@ -22,10 +22,11 @@ class FolderTreeView(Gtk.Box):
     }
     def __init__(self, folder="", short_path_length=120):
         super().__init__()
-        self.set_size_request(200, 200)
+        self.set_size_request(-1, 300)
         self.set_orientation(Gtk.Orientation.VERTICAL)
         self.short_path_length = short_path_length
 
+        # add a button to close the tree view
         self.closable_label = ClosableLabel(self.short_path(folder))
         self.closable_label.connect("closed", self.on_close_clicked)
         self.pack_start(self.closable_label, False, False, 0)
