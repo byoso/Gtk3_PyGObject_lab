@@ -29,15 +29,15 @@ class FilesCherryPicker(Gtk.Box):
         self.short_path_length = short_path_length
         self.viewport = Gtk.Viewport()
         self.add(self.viewport)
-        self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        self.viewport.add(self.box)
+        self.scrollable_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.viewport.add(self.scrollable_box)
         self.selector_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         self.folder_selector = FileSelector(folder_selector=True, placeholder="Add a folder")
         self.selector_box.pack_start(self.folder_selector, True, True, 0)
-        self.box.pack_start(self.selector_box, True, True, 0)
+        self.scrollable_box.pack_start(self.selector_box, True, True, 0)
         self.folder_selector.connect("selected", self.add_folder)
         self.box_folder_containers = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        self.box.pack_start(self.box_folder_containers, True, True, 0)
+        self.scrollable_box.pack_start(self.box_folder_containers, True, True, 0)
 
         self.build_folder_containers()
 

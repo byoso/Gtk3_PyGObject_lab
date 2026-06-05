@@ -17,12 +17,16 @@ class TestWindow(Gtk.Window):
         super().__init__(title="Test Window")
         self.set_default_size(400, 300)
         self.connect("destroy", Gtk.main_quit)
-        self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        self.scrollable_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         # scrollable area
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled_window.add(self.box)
-        self.add(scrolled_window)
+        # scrolled_window = Gtk.ScrolledWindow()
+        # scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        # scrolled_window.add(self.scrollable_box)
+        # self.add(scrolled_window)
+
+        # non scrollable area
+        self.non_scrollable_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        self.add(self.non_scrollable_box)  # Add the non-scrollable box to the main window
 
         # test button
         # self.test_button = TestButton()
@@ -32,7 +36,7 @@ class TestWindow(Gtk.Window):
         #  ========================================
 
         self.file_cherry_picker = FilesCherryPicker()
-        self.box.pack_start(self.file_cherry_picker, True, True, 0)
+        self.non_scrollable_box.pack_start(self.file_cherry_picker, True, True, 0)
 
 
 

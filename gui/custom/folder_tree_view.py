@@ -6,6 +6,9 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GObject
 
 
+from gui.custom.closable_label import ClosableLabel
+
+
 class FolderTreeView(Gtk.Box):
     """
     Emits "selected" + path: str on double-click or Enter on an item.
@@ -20,7 +23,12 @@ class FolderTreeView(Gtk.Box):
     def __init__(self, folder="", short_path_length=120):
         super().__init__()
         self.set_size_request(200, 200)
+        self.set_orientation(Gtk.Orientation.VERTICAL)
         self.short_path_length = short_path_length
+
+        self.closable_label = ClosableLabel(self.short_path(folder))
+        self.closable_label.connect("closed", self.on_close_clicked)
+        self.pack_start(self.closable_label, False, False, 0)
 
         # 1. THE MODEL: A TreeStore
         # Column 0: String (Displayed name), Column 1: String (Absolute path), Column 2: Icon name
@@ -101,3 +109,6 @@ class FolderTreeView(Gtk.Box):
         if len(path) > self.short_path_length:
             return f"...{path[-self.short_path_length-3:]}"
         return path
+
+    def on_close_clicked(self, widget):
+        self.destroy()
