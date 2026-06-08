@@ -4,10 +4,9 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
 
-from components.small.checkable_label import CheckableLabel
-from components.small.closable_label import ClosableLabel
 from components.medium.files_cherry_picker import FilesCherryPicker
 from components.medium.files_lister import FileLister
+from components.small.checkable_label import CheckableLabel
 
 
 
@@ -56,3 +55,8 @@ class FilesCherryPickerLister(Gtk.Box):
             return self.file_lister.get_selected_files()
         else:
             return []
+
+    @classmethod
+    def preview_instance(cls):
+        instance = cls(short_path_length=35)
+        return instance

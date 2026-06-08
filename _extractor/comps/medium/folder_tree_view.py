@@ -6,7 +6,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GObject
 
 
-from components.small.closable_label import ClosableLabel
+from comps.small.closable_label import ClosableLabel
 
 
 class FolderTreeView(Gtk.Box):
@@ -20,30 +20,26 @@ class FolderTreeView(Gtk.Box):
             (str,),  # that means one argument sent with the signal
         ),
     }
-    def __init__(self, folder=".", short_path_length=120):
+    def __init__(self, folder_path="", short_path_length=120):
         super().__init__()
         self.set_size_request(-1, 300)
         self.set_orientation(Gtk.Orientation.VERTICAL)
         self.short_path_length = short_path_length
 
-        # add a button to close the tree view
-        self.closable_label = ClosableLabel(self.short_path(folder))
-        self.closable_label.connect("closed", self.on_close_clicked)
-        self.pack_start(self.closable_label, False, False, 0)
 
         # 1. THE MODEL: A TreeStore
         # Column 0: String (Displayed name), Column 1: String (Absolute path), Column 2: Icon name
         self.store = Gtk.TreeStore(str, str, str)
 
         # Fill the model with a test folder (e.g., your user folder)
-        root_path = os.path.expanduser(folder)
+        root_path = os.path.expanduser(folder_path)
         self.populate_tree(root_path, None)
 
         # 2. THE VIEW: The TreeView connected to the model
         self.tree_view = Gtk.TreeView(model=self.store)
 
         # 3. THE RENDERING: Create the display column (sort of title)
-        column = Gtk.TreeViewColumn(self.short_path(folder))
+        column = Gtk.TreeViewColumn(self.short_path(folder_path))
 
         # Renderer for the icon
         icon_renderer = Gtk.CellRendererPixbuf()
@@ -73,9 +69,12 @@ class FolderTreeView(Gtk.Box):
         """ Recursive function to populate the TreeStore """
         try:
             for item in sorted(os.listdir(path)):
-
+                if item.startswith(".") or item.startswith("_"):  # Skip hidden files/folders for cleaner display
+                    continue
                 full_path = os.path.join(path, item)
                 is_dir = os.path.isdir(full_path)
+                if not is_dir and not item.endswith(".py"):
+                    continue
 
                 # Choice of standard GNOME icon
                 icon_name = "folder" if is_dir else "document"
@@ -101,15 +100,11 @@ class FolderTreeView(Gtk.Box):
         tree_iter = model.get_iter(path)
 
         # Retrieve the data of the selected row
-        file_name = model.get_value(tree_iter, 0)
         absolute_path = model.get_value(tree_iter, 1)
 
         self.emit("selected", absolute_path)
 
-    def short_path(self, path):
+    def short_path(self, path: str) -> str:
         if len(path) > self.short_path_length:
-            return f"...{path[-self.short_path_length-3:]}"
+            return f"...{path[-(self.short_path_length-3):]}"
         return path
-
-    def on_close_clicked(self, widget):
-        self.destroy()

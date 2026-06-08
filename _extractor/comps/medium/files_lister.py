@@ -2,41 +2,84 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GObject
 
+
+
+import ast
+
+
+def list_classes_in_file(file_path) -> list[str]:
+    "helper that returns a list of class names defined in the given Python file using the ast module"
+    with open(file_path, 'r') as file:
+        node = ast.parse(file.read(), filename=file_path)
+    return [n.name for n in ast.walk(node) if isinstance(n, ast.ClassDef)]
+
+
 class FileListerRow(Gtk.ListBoxRow):
     """
     A custom row representing a single file with its path,
     a selection checkbox, and a dedicated removal button.
     """
-    def __init__(self, full_path="some_path", short_path_length=120):
+
+    __gsignals__ = {
+        "preview": (
+            GObject.SignalFlags.RUN_FIRST,
+            None,
+            (str, str),
+        ),
+    }
+
+    def __init__(self, full_path, short_path_length=120):
         super().__init__()
         self.full_path = full_path
         self.short_path_length = short_path_length
 
         # Main horizontal container for the row elements
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        hbox.set_margin_start(5)
-        hbox.set_margin_end(5)
-        self.add(hbox)
+        self.hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        self.hbox.set_margin_start(5)
+        self.hbox.set_margin_end(5)
+        self.add(self.hbox)
 
         # 1. Path Label (left-aligned, expands to occupy available space)
         self.label = Gtk.Label(label=self.short_path(self.full_path), xalign=0)
-        hbox.pack_start(self.label, True, True, 0)
+        self.hbox.pack_start(self.label, True, True, 0)
 
-        # 2. Checkbox (fixed width)
+        # 2 Preview ComboBox (fixed width, right-aligned)
+        self.hbox.preview_combo_box = Gtk.ComboBoxText()
+        self.hbox.preview_combo_box.set_entry_text_column(0)
+        classes_to_preview = list_classes_in_file(self.full_path)
+        for cls in classes_to_preview:
+            self.hbox.preview_combo_box.append_text(cls)
+        self.hbox.preview_combo_box.set_active(0)
+        self.hbox.pack_start(self.hbox.preview_combo_box, False, False, 0)
+        # self.hbox.preview_combo_box.connect("changed", self.on_preview_clicked)
+
+        self.selected_class_name = self.hbox.preview_combo_box.get_active_text()
+
+        # 3. preview button
+        self.hbox.preview_button = Gtk.Button(label="👁️")
+        self.hbox.pack_start(self.hbox.preview_button, False, False, 0)
+
+        self.hbox.preview_button.connect("clicked", self.on_preview_clicked)
+
+        # 4. Checkbox (fixed width)
         self.checkbox = Gtk.CheckButton()
-        hbox.pack_start(self.checkbox, False, False, 0)
+        self.hbox.pack_start(self.checkbox, False, False, 0)
 
-        # 3. Remover Button (fixed width, native button with system icon)
+        # 5. Remover Button (fixed width, native button with system icon)
         self.remove_button = Gtk.Button()
         self.remove_button.set_relief(Gtk.ReliefStyle.NONE) # Makes it look like a flat icon
         icon = Gtk.Image.new_from_icon_name("window-close", Gtk.IconSize.BUTTON)
         self.remove_button.add(icon)
-        hbox.pack_start(self.remove_button, False, False, 0)
+        self.hbox.pack_start(self.remove_button, False, False, 0)
 
     def short_path(self, path):
         if len(path) > self.short_path_length:
             return f"...{path[-(self.short_path_length - 3):]}"
         return path
+
+    def on_preview_clicked(self, widget):
+        self.selected_class_name = self.hbox.preview_combo_box.get_active_text()
+        self.emit("preview", self.full_path, self.selected_class_name)
 
 
 class FileListerHeader(Gtk.Box):
@@ -73,6 +116,12 @@ class FileLister(Gtk.Box):
             None,
             (str,),  # Emits the absolute path of the removed file
         ),
+        "preview": (
+            GObject.SignalFlags.RUN_FIRST,
+            None,
+            (str, str),  # Emits the absolute path of the file and the class name to preview
+        ),
+
     }
 
     def __init__(self, files=None, short_path_length=120):
@@ -117,9 +166,14 @@ class FileLister(Gtk.Box):
         # Connect row button and checkbox signals natively
         row.remove_button.connect("clicked", self.on_row_remove_clicked, row)
         row.checkbox.connect("toggled", self.on_row_checkbox_toggled)
+        row.connect("preview", self.on_row_preview)
 
         self.list_box.add(row)
         self.show_all()
+
+    def on_row_preview(self, widget, file_path, class_name):
+        """ Emits a 'preview' signal with the file path and class name when the preview button is clicked """
+        self.emit("preview", file_path, class_name)
 
     def on_row_remove_clicked(self, button, row):
         """ Handles individual row deletion """

@@ -15,7 +15,7 @@ class CheckableLabel(Gtk.Box):
             (),  # that means no argument sent with the signal
         ),
     }
-    def __init__(self, text):
+    def __init__(self, text="text"):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
 
         self.set_margin_start(20)

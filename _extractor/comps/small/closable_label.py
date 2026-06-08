@@ -18,7 +18,7 @@ class ClosableLabel(Gtk.Box):
         ),
     }
 
-    def __init__(self, text="text"):
+    def __init__(self, text):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
 
         self.set_margin_start(20)
