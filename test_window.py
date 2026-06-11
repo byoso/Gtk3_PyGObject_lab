@@ -1,3 +1,6 @@
+#! /usr/bin/env python3
+
+
 import gi
 
 gi.require_version('Gtk', '3.0')
@@ -62,3 +65,9 @@ class TestWindow(Gtk.Window):
         print("Test button :")
         files = self.file_cherry_picker_lister.get_allowed_files()
         print("Selected files:", files)
+
+
+if __name__ == "__main__":
+    win = TestWindow()
+    win.show_all()
+    Gtk.main()

@@ -8,12 +8,18 @@ from comps.medium.files_cherry_picker import FilesCherryPicker
 from comps.medium.files_lister import FileLister
 
 
+
 class FilesCherryPickerLister(Gtk.Box):
     __gsignals__ = {
         "preview": (
             GObject.SignalFlags.RUN_FIRST,
             None,
             (str, str),  # Emits the absolute path of the file and the class name to preview
+        ),
+        "extract": (
+            GObject.SignalFlags.RUN_FIRST,
+            None,
+            (object,),  # Emits a list of selected file paths for extraction
         ),
 
     }
@@ -66,6 +72,4 @@ class FilesCherryPickerLister(Gtk.Box):
 
     def on_extract_clicked(self, widget):
         selected_files = self.get_selected_files()
-        print("Selected files for extraction:")
-        for file in selected_files:
-            print(file)
+        self.emit("extract", selected_files)

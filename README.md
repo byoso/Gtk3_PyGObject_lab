@@ -4,19 +4,11 @@
 [Official PyGObject ref to keep nearby](https://lazka.github.io/pgi-docs/index.html)
 
 
-# Components
 
-## Big
+# Extractor
 
-- FilesCherryPickerLister: select multiple folder, cherry-pick, manage the selected files.
+The extractor can be used to list, preview ad extract the commponents:
 
-## Medium
-
-- FilesCherryPicker     : Quite big, select a folder and then cherry pick in a tree view.
-- FilesLister           : display a list of items -> label + checkbox + remove
-- FolderTreeView        : the tree view for the FilesCherryPicker
-
-## Small
-
-- FileSelectorButton    : simple button to open a dialogue the pick a file (or folder)
-- FileSelector          : same purpose, field + button
+```sh
+./extractor.sh
+```

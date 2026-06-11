@@ -9,6 +9,23 @@ from gi.repository import Gtk, GObject
 from comps.small.closable_label import ClosableLabel
 
 
+
+
+NOT_WANTED_DIRS = {"containers", "__pycache__", "venv", "env", ".git"}
+
+
+def eligible_file(file_name):
+    return file_name.endswith(".py") and not file_name.startswith("_") and not file_name.startswith(".")
+
+def eligible_dir(path):
+    name = os.path.basename(path)
+    return (
+        os.path.isdir(path)
+        and not name.startswith(".")
+        and not name.startswith("_")
+        and name not in NOT_WANTED_DIRS
+    )
+
 class FolderTreeView(Gtk.Box):
     """
     Emits "selected" + path: str on double-click or Enter on an item.
@@ -22,6 +39,7 @@ class FolderTreeView(Gtk.Box):
     }
     def __init__(self, folder_path="", short_path_length=120):
         super().__init__()
+        self.dir_cache = {}
         self.set_size_request(-1, 300)
         self.set_orientation(Gtk.Orientation.VERTICAL)
         self.short_path_length = short_path_length
@@ -65,35 +83,6 @@ class FolderTreeView(Gtk.Box):
         self.show_all()
 
 
-    def populate_tree(self, path, parent_iter):
-        """ Recursive function to populate the TreeStore """
-        try:
-            for item in sorted(os.listdir(path)):
-                if item.startswith(".") or item.startswith("_"):  # Skip hidden files/folders for cleaner display
-                    continue
-                full_path = os.path.join(path, item)
-                is_dir = os.path.isdir(full_path)
-                if not is_dir and not item.endswith(".py"):
-                    continue
-
-                # Choice of standard GNOME icon
-                icon_name = "folder" if is_dir else "document"
-
-                # Add the element to the model
-                current_iter = self.store.append(parent_iter, [item, full_path, icon_name])
-
-                # If it's a folder (and not empty), scan it as well
-                # Note: On very large disks, it's better to load on demand
-                # when the user clicks the arrow to avoid slowdowns.
-                if is_dir:
-                    try:
-                        if os.getenv("GTK_LAB_DEEP_SCAN") or len(self.store) < 200: # Performance safety
-                            self.populate_tree(full_path, current_iter)
-                    except PermissionError:
-                        pass
-        except PermissionError:
-            pass
-
     def on_row_activated(self, tree_view, path, column):
         """ Callback triggered on double-click """
         model = tree_view.get_model()
@@ -108,3 +97,47 @@ class FolderTreeView(Gtk.Box):
         if len(path) > self.short_path_length:
             return f"...{path[-(self.short_path_length-3):]}"
         return path
+
+    def populate_tree(self, path, parent_iter):
+        """Recursive function to populate the TreeStore"""
+        try:
+            for item in sorted(os.listdir(path)):
+
+                # skip hidden / private files early
+                if item.startswith(".") or item.startswith("_"):
+                    continue
+
+                full_path = os.path.join(path, item)
+
+                is_dir = os.path.isdir(full_path)
+
+                # -------------------------
+                # FILTERING LOGIC
+                # -------------------------
+
+                if is_dir:
+                    if not eligible_dir(full_path):
+                        continue
+                else:
+                    if not eligible_file(item):
+                        continue
+
+                # icon selection
+                icon_name = "folder" if is_dir else "document"
+
+                # add node
+                current_iter = self.store.append(
+                    parent_iter,
+                    [item, full_path, icon_name]
+                )
+
+                # recurse only into valid directories
+                if is_dir:
+                    try:
+                        if os.getenv("GTK_LAB_DEEP_SCAN") or len(self.store) < 200:
+                            self.populate_tree(full_path, current_iter)
+                    except PermissionError:
+                        pass
+
+        except PermissionError:
+            pass
