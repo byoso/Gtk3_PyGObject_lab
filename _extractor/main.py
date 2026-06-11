@@ -2,7 +2,7 @@
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
+from gi.repository import Gtk, GLib
 
 import importlib
 import os
@@ -42,6 +42,21 @@ class MainWindow(Gtk.Window):
         super().__init__(title="Extractor !")
         self.set_default_size(600, 600)
         self.connect("destroy", Gtk.main_quit)
+        # self.set_position(Gtk.WindowPosition.CENTER)
+
+        # HeaderBar
+        header = Gtk.HeaderBar()
+        header.set_title("Extractor !")
+        header.set_show_close_button(True)
+        # Replace the default titlebar with our custom HeaderBar
+        self.set_titlebar(header)
+
+        # open "build" button
+        open_button = Gtk.Button()
+        buton_icon = Gtk.Image.new_from_icon_name("folder-open-symbolic", Gtk.IconSize.BUTTON)
+        open_button.set_image(buton_icon)
+        open_button.connect("clicked", self.on_open_build_folder)
+        header.pack_end(open_button)
 
         # Pixbuf icon
         icon_path = PROJECT_ROOT / "_extractor" / "icon.png"
@@ -77,7 +92,27 @@ class MainWindow(Gtk.Window):
             print(f"Preview error: {e}")
 
     def on_extract(self, widget, selected_files):
+        if not selected_files:
+            return
+        self.cherry_picker_lister.extract_button.set_label("Extracting...")
         extract_files(selected_files)
+        self.cherry_picker_lister.extract_button.set_label("Done ✅")
+
+        # wait 1 second asynchronously before resetting the button label
+        GLib.timeout_add(1000, self.reset_extract_button)
+
+    def reset_extract_button(self):
+        self.cherry_picker_lister.extract_button.set_label("Extract Selected Files")
+
+    def on_open_build_folder(self, widget):
+        build_folder = PROJECT_ROOT / "build"
+        if not build_folder.exists():
+            print(f"Build folder does not exist: {build_folder}")
+            return
+
+        # Open the build folder in the file manager
+        import subprocess
+        subprocess.run(["xdg-open", str(build_folder)])
 
 
 def main():

@@ -27,6 +27,11 @@ class FilesCherryPickerLister(Gtk.Box):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.short_path_length = short_path_length
 
+        # Extract selected files button
+        self.extract_button = Gtk.Button(label="Extract Selected Files")
+        self.extract_button.set_size_request(-1, 40)
+        self.extract_button.connect("clicked", self.on_extract_clicked)
+        self.pack_start(self.extract_button, False, False, 0)
 
         # files lister
         self.file_lister = FileLister(short_path_length=self.short_path_length)
@@ -40,11 +45,6 @@ class FilesCherryPickerLister(Gtk.Box):
         self.file_cherry_picker.set_size_request(-1, 200)
         self.file_cherry_picker.connect("selected", self.file_picked)
 
-        # Extract selected files button
-        self.extract_button = Gtk.Button(label="Extract Selected Files")
-        self.extract_button.set_size_request(-1, 40)
-        self.extract_button.connect("clicked", self.on_extract_clicked)
-        self.pack_start(self.extract_button, False, False, 0)
 
     def on_row_preview(self, widget, file_path, class_name):
         """ Emits a 'preview' signal with the file path and class name when the preview button is clicked """

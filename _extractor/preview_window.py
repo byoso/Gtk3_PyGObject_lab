@@ -10,6 +10,8 @@ class PreviewWindow(Gtk.Window):
     def __init__(self, file_path, class_name):
         super().__init__(title=f"Preview: {class_name}")
 
+        # self.set_position(Gtk.WindowPosition.CENTER)
+        self.set_position(Gtk.WindowPosition.CENTER)
 
         self.box = Gtk.Box()
         self.box.set_border_width(100)
